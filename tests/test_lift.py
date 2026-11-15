@@ -1,12 +1,13 @@
 """M5 增量：基线、金额账、置信区间、最大余额法分摊、幂等重跑与批次。"""
 from __future__ import annotations
 
+import datetime as dt
 from decimal import Decimal
 
 import pytest
 
 from app import config
-from app.modules.m2_price import coerce
+from app.modules.m2_price import coerce, versions
 from app.modules.m5_lift import baseline, ci, service as lift_service, spread
 from fixtures import dataset as fx
 
@@ -138,3 +139,13 @@ def test_marks_sample_data_facts(settings, store, batch_id):
     assert Decimal(rows["P2601"]["ci_high"]) > Decimal(rows["P2601"]["lift_gmv"])
     assert rows["P2601"]["note"] == "区间不含 0"
     assert rows["P2602"]["note"] == "区间包含 0"
+
+
+def test_baseline_blocks_when_control_mapping_missing():
+    # 反例：没有映射就把对照倍数当 1.0，品类走势被悄悄丢掉；必须显式阻断
+    window = versions.Window(promo_id="P9", sku="MY-9999", channel="电商", version=1,
+                             start=dt.date(2026, 10, 1), end=dt.date(2026, 10, 5),
+                             price_incl=Decimal("9.9000"), price_excl=Decimal("8.7611"))
+    dates = set(baseline.daterange(dt.date(2026, 10, 1), dt.date(2026, 10, 5)))
+    assert config.CONTROL_MAP.get("MY-9999") is None
+    assert baseline.compute([window], dates, [], [], {}) == "A_NO_CONTROL"

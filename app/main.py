@@ -1,4 +1,4 @@
-"""应用装配：配置 → 存储 → 模板 → 六个功能模块路由。
+"""应用装配：配置 → 存储 → 模板 → 七个功能模块路由。
 
 用工厂函数而不是模块级 app，测试可以给每个用例一个临时库。
 """
@@ -15,16 +15,19 @@ from .modules.m3_quality import handler as m3_handler
 from .modules.m4_elastic import handler as m4_handler
 from .modules.m5_lift import handler as m5_handler
 from .modules.m6_report import handler as m6_handler
+from .modules.m7_design import handler as m7_handler
 
-MODULES = (m1_handler, m2_handler, m3_handler, m4_handler, m5_handler, m6_handler)
-PAGE_PATHS = ("/", "/contract", "/quarantine", "/elasticity", "/lift", "/report")
+MODULES = (m1_handler, m2_handler, m3_handler, m4_handler, m5_handler, m6_handler,
+           m7_handler)
+PAGE_PATHS = ("/", "/contract", "/quarantine", "/elasticity", "/lift", "/report",
+              "/design")
 
 
 def create_app(settings: config.Settings | None = None) -> FastAPI:
     settings = settings or config.Settings.from_env()
     app = FastAPI(
         title="pricelift 促销价格弹性与增量测算",
-        description="采信 → 归价 → 质量 → 弹性 → 增量 → 报告",
+        description="采信 → 归价 → 质量 → 弹性 → 增量 → 报告 → 实验设计",
         version=settings.rule_version,
     )
     app.state.settings = settings

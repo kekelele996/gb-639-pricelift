@@ -23,6 +23,7 @@ NAV = (
     ("/quarantine", "隔离区", "quality"),
     ("/elasticity", "弹性", "elastic"),
     ("/lift", "增量", "lift"),
+    ("/design", "实验设计", "design"),
     ("/report", "报告", "report"),
 )
 STATUS_LABELS = {

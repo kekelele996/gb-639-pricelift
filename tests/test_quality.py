@@ -122,3 +122,22 @@ def test_grade_and_coverage_from_accounts(settings, store, batch_id):
     assert dirty["grade"] == "C"
     assert dirty["data_errors"] == 9
     assert dirty["bad_rate"] == "0.0900"
+
+
+def test_coverage_gate_is_inclusive_at_threshold():
+    # 边界：有效天数占比正好等于门槛仍进测算，少一天就阻断（>= 不是 >）
+    def account(valid: int, coverage: str) -> dict:
+        return {"promo_id": "P1", "sku": "MY-0012", "channel": "电商", "days": 10,
+                "days_valid": valid, "days_missing": 10 - valid, "days_dropped": 0,
+                "coverage": Decimal(coverage)}
+
+    at_gate = account(7, "0.7000")
+    below = account(6, "0.6000")
+    assert Decimal(at_gate["coverage"]) == config.MIN_COVERAGE_RATIO
+    assert quality_service.measured_accounts([at_gate]) == [at_gate]
+    assert quality_service.measured_accounts([below]) == []
+    assert quality_service.measured_accounts([at_gate, below]) == [at_gate]
+    blocked = rules.low_coverage_quarantine([below])
+    assert [row["code"] for row in blocked] == ["Q_LOW_COVERAGE"]
+    assert "P1" in blocked[0]["detail"]
+    assert rules.low_coverage_quarantine([at_gate]) == []

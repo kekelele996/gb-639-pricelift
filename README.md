@@ -1,6 +1,6 @@
 # pricelift · 促销价格弹性与增量测算
 
-牧原乳品区域销售部内部工具：导入日销与促销日历，得到「价格弹性 → 促销增量 → 四账核对」。
+牧原乳品区域销售部内部工具：导入日销与促销日历，得到「价格弹性 → 促销增量 → 五账核对 → 下期实验设计」。
 单体 FastAPI 服务 + Jinja2 服务端模板 + 原生 HTML/CSS/JS，无构建工具、无 CDN。
 
 ## 能力
@@ -12,6 +12,7 @@
 - 对数线性弹性：斜率、标准误、t 值、R²，0 销量支持平移与剔除两种方式
 - 增量测算：对照组基线 + 95% 区间，渠道分摊用最大余额法保证守恒
 - 五账核对（行/天数/金额/促销/分摊）与运行清单导出
+- 实验设计：按目标效应与功效算最小实验期、预算下可识别效应、对照建议与预期区间
 
 ## 模块
 
@@ -23,6 +24,7 @@
 | M4 弹性 | 分组弹性与显著性 | `GET /api/elasticity` | `/elasticity` |
 | M5 增量与批次 | 增量、区间、渠道分摊、批次历史 | `POST /api/lift` · `GET /api/batches` | `/lift` |
 | M6 报告导出 | 五账核对与 CSV/清单导出 | `GET /api/report` · `GET /api/export?kind=` | `/report` |
+| M7 实验设计 | 最小实验期、可识别效应、对照建议、缺日敏感性 | `POST /api/design` · `GET /api/design` | `/design` |
 
 ## 核心规则
 
@@ -31,6 +33,8 @@
 2. **增量**：`基线 = 促销前 14 天日均 × 有效天数 × 对照组同期倍数`，
    `增量 = 实际 − 基线`，金额 Decimal 2 位；区间用斜率标准误的 delta 法给出。
 3. **促销区间**：左闭右开 `[开始日, 结束日)`；同日多版时版本号大者生效，与书写顺序无关。
+4. **实验设计**：`最小实验期 = (A² + sqrt(A⁴ + 4·A²·14))/2`，`A = (z(1−α/2) + z(功效))·cv/目标效应`；
+   方差用 HC1 稳健标准误放大，缺日按三种补法各算一遍，对照按实验期重叠与前置趋势差打分。
 
 详细定义见 `docs/DATA-DICTIONARY.md`，陷阱与测试映射见 `docs/DEPTH.md`。
 
@@ -57,7 +61,8 @@ uvicorn app.main:create_app --factory --port 18208
 2. `/quarantine` 看严重度与原因码分布，点「导出隔离行」拿到带行号的 CSV。
 3. `/elasticity` 看按商品的弹性柱图与显著性；点「只看显著」可过滤。
 4. `/lift` 看增量、区间与渠道分摊合计。
-5. `/report` 核对五账，导出增量 / 弹性 / 四账 / 运行清单。
+5. `/report` 核对五账，导出增量 / 弹性 / 五账 / 运行清单。
+6. `/design` 填目标效应与预算天数，看最小实验期、预算下可识别效应、对照建议与三种缺日补法。
 
 ## 页面
 
@@ -69,17 +74,18 @@ uvicorn app.main:create_app --factory --port 18208
 | `/elasticity` | 弹性结论、按商品 CSS 柱图、全部估计表 |
 | `/lift` | 增量结论、重算、增量明细、渠道分摊、批次 |
 | `/report` | 结论、五账核对、指标、原因码、运行清单（可打印） |
+| `/design` | 设计输入、结论、实验窗与波动、缺日插补、控制组候选、设计校验 |
 
 ## 目录
 
 ```text
 app/                 main.py config.py errors.py reasons.py manifest.py store.py web.py
-app/modules/         m1_ingest m2_price m3_quality m4_elastic m5_lift m6_report
-app/templates/       base.html + 6 页
+app/modules/         m1_ingest m2_price m3_quality m4_elastic m5_lift m6_report m7_design
+app/templates/       base.html + 7 页
 app/static/          theme.css layout.css components.css print.css app.js charts.js tables.js
 docs/                DEPTH.md DATA-DICTIONARY.md
 sample_data/         7 份样例（含 3 类以上脏数据）+ 说明
-tests/               conftest.py 6 个模块测试 test_e2e.py fixtures/
+tests/               conftest.py 7 个模块测试 test_e2e.py fixtures/
 ```
 
 ## 已知不覆盖
@@ -88,3 +94,4 @@ tests/               conftest.py 6 个模块测试 test_e2e.py fixtures/
 - 对照组映射手工维护在 `app/config.py` 的 `CONTROL_MAP`，没有映射的商品直接阻断。
 - 弹性模型不含固定效应与季节虚拟变量。
 - 中文数字型促销条件（「满三百减五十」）不解析。
+- 实验设计的功效按正态近似算，不做 t 分布小样本校正、序贯检验与多商品预算分配。

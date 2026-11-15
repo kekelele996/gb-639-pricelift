@@ -153,6 +153,61 @@ REASONS = {
     "R_EMPTY_SELECTION": _r(
         "R_EMPTY_SELECTION", WARN, "report",
         "导出选择为空", "先跑一次测算再导出"),
+    # ---- M7 实验设计 ----
+    "D_NO_BATCH": _r(
+        "D_NO_BATCH", WARN, "design",
+        "还没有批次，设计缺少历史序列", "先在导入页跑一次"),
+    "D_UNKNOWN_SERIES": _r(
+        "D_UNKNOWN_SERIES", ERROR, "design",
+        "本批次没有该商品该渠道的日销记录", "换一个出现在日销文件里的商品"),
+    "D_BAD_TARGET": _r(
+        "D_BAD_TARGET", ERROR, "design",
+        "目标效应不可用（≤0、>100% 或无法解析）", "写 0.05 或 5% 都认"),
+    "D_BAD_PARAM": _r(
+        "D_BAD_PARAM", ERROR, "design",
+        "α、功效、预算天数或开始日不在取值范围内", "α 在 0-0.5、功效在 0.5-1、天数 1-180"),
+    "D_FLAT_SERIES": _r(
+        "D_FLAT_SERIES", ERROR, "design",
+        "历史有效天数不足，无法定实验期", "至少 7 天窗口、3 天有效记录"),
+    "D_FLAT_PRICE": _r(
+        "D_FLAT_PRICE", WARN, "design",
+        "价格或销量没有变化，稳健标准误按朴素处理", "换一个有价格变化的序列再比"),
+    "D_HETERO": _r(
+        "D_HETERO", WARN, "design",
+        "残差异方差，稳健标准误高于朴素标准误", "方差已放大，实验期按放大后的算"),
+    "D_BUDGET_SHORT": _r(
+        "D_BUDGET_SHORT", WARN, "design",
+        "预算天数少于所需实验期", "按可识别效应决定是否值得跑"),
+    "D_IMPUTE_SENSITIVE": _r(
+        "D_IMPUTE_SENSITIVE", WARN, "design",
+        "缺日补法改变结论（区间含 0 或所需天数摆动）", "补齐缺日后重算一次"),
+    "D_IMPUTE_STABLE": _r(
+        "D_IMPUTE_STABLE", INFO, "design",
+        "三种缺日补法结论一致", "缺日不影响本设计"),
+    "D_CONTROL_OVERLAP": _r(
+        "D_CONTROL_OVERLAP", ERROR, "design",
+        "候选对照在实验期内有自己的促销", "重叠期对照倍数不可用，换对照或挪实验期"),
+    "D_CONTROL_TREND": _r(
+        "D_CONTROL_TREND", WARN, "design",
+        "候选对照与目标的前置趋势差超过 10%", "趋势不同会把差值算进基线"),
+    "D_CONTROL_SHORT": _r(
+        "D_CONTROL_SHORT", WARN, "design",
+        "候选对照的早段或晚段有效天数不足，趋势不可比", "换数据更完整的对照"),
+    "D_SHORT_HISTORY": _r(
+        "D_SHORT_HISTORY", WARN, "design",
+        "促销开始前的干净窗口太短，趋势改按全窗口比", "补更早的日销再比趋势"),
+    "D_CONTROL_PICKED": _r(
+        "D_CONTROL_PICKED", INFO, "design",
+        "已按前置趋势差选出对照", "换实验期要重新选一次"),
+    "D_CONTROL_REGISTERED": _r(
+        "D_CONTROL_REGISTERED", INFO, "design",
+        "选中的对照与配置里的映射一致", "无需改配置"),
+    "D_NO_CONTROL": _r(
+        "D_NO_CONTROL", ERROR, "design",
+        "没有可用对照候选，基线不可算", "补同渠道同品类商品的日销"),
+    "D_WINDOW_OVERLAP": _r(
+        "D_WINDOW_OVERLAP", WARN, "design",
+        "实验期内本商品自己有促销，窗口不干净", "把开始日挪到促销结束之后"),
 }
 
 

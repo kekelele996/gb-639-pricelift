@@ -137,3 +137,15 @@ def test_contract_exposes_units_and_rules():
     rule_keys = {rule["key"] for rule in payload["rules"]}
     assert {"price_chain", "pack", "window", "version", "zero_qty", "baseline"} <= rule_keys
     assert payload["significance_t"] == "1.96"
+
+
+def test_zero_length_promo_range_rejected():
+    # 边界：结束日等于开始日，左闭右开区间长度为 0，必须拒绝而不是算成一天
+    _, records = fx.as_records(fx.PROMO_HEADER, [
+        fx.promo("P6", "MY-0012", "电商", 1, "2026-10-05", "2026-10-05", "9.50"),
+    ])
+    built = versions.build(records)
+    assert built["window_objs"] == []
+    assert built["blocked_promos"] == ["P6"]
+    assert [row["code"] for row in built["quarantine"]] == ["Q_PROMO_BAD_RANGE"]
+    assert built["quarantine"][0]["raw_value"] == "2026-10-05~2026-10-05"

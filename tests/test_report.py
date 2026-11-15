@@ -112,3 +112,18 @@ def test_manifest_json_serializes_decimals_without_float():
     assert '"6685.74"' in text
     assert '"0.01"' in text
     assert isinstance(manifest_out.json_safe(Decimal("1.10")), str)
+
+
+def test_reconcile_stays_balanced_under_drop_mode(settings, store):
+    # 不变量：换一种 0 销量处理方式，五账仍然全部平
+    from app.modules.m5_lift import service as lift_service
+    result = lift_service.run(settings=settings, store=store, dataset="main",
+                              zero_mode="drop")
+    other = result["batch"]["batch_id"]
+    assert result["replay"] is False
+    rows = report_service.reconcile(store, other)
+    assert [row["account"] for row in rows] == ["行账", "天数账", "促销账", "金额账", "分摊账"]
+    assert [row["verdict"] for row in rows] == ["平"] * 5
+    payload = report_service.report_payload(store, other)
+    assert payload["balanced"] is True
+    assert payload["totals"]["coverage"] != ""

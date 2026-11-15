@@ -18,7 +18,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CHINA_TZ = dt.timezone(dt.timedelta(hours=8), "Asia/Shanghai")
 UTC = dt.timezone.utc
 
-RULE_VERSION = "pricelift/1.3.0"
+RULE_VERSION = "pricelift/1.4.0"
 MONEY_QUANT = Decimal("0.01")
 QTY_QUANT = Decimal("1")
 PRICE_QUANT = Decimal("0.0001")
@@ -34,6 +34,7 @@ STAGE_LABELS = {
     "quality": "质量",
     "elastic": "弹性",
     "lift": "增量",
+    "design": "设计",
     "report": "报告",
 }
 STAGE_FLOW = "采信 → 归价 → 质量 → 弹性 → 增量 → 报告"
